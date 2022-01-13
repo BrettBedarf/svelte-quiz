@@ -1,4 +1,5 @@
 <script>
+	import { fade, blur, fly, slide } from 'svelte/transition';
 	import Question from './Question.svelte';
 
 	let numCorrect = 0;
@@ -8,6 +9,7 @@
 	// const quizProm = getQuiz();
 	let questionsProm = getQuiz();
 	let questionIdx = 0;
+	let questionHeight;
 
 	async function getQuiz() {
 		const response = await fetch(
@@ -31,6 +33,8 @@
 		return questionData;
 	}
 
+	// instead of using unique to reset from parent, can also reassign the
+	// getQuiz promise, which will re-await
 	function resetQuiz() {
 		numCorrect = 0;
 		numWrong = 0;
@@ -55,48 +59,60 @@
 		<h2 class="score">
 			Score: {numCorrect}/{questions.length}
 		</h2>
-
-		<div class="question-wrapper">
-			<Question
-				questionHtml={questions[questionIdx].questionHtml}
-				answers={questions[questionIdx].answers}
-				correctAnswer={questions[questionIdx].correctAnswer}
-				questionNum={questionIdx + 1}
-				question={questions[questionIdx]}
-				on:addToCorrect={() => {
-					numCorrect++;
-				}}
-				on:removeFromCorrect={() => {
-					numCorrect--;
-				}}
-				on:addToWrong={() => {
-					numWrong++;
-				}}
-				on:removeFromWrong={() => {
-					numWrong--;
-				}}
-				on:removeFromUnanswered={() => {
-					numUnanswered--;
-				}}
-			/>
-		</div>
-		<div class="change-questions">
-			{#if questionIdx !== 0}
-				<button on:click={e => questionIdx--}>Previous Question</button>
-			{/if}
-			{#if questionIdx < questions.length - 1}
-				{#if questions[questionIdx]?.pickedAns !== undefined}
-					<button on:click={e => questionIdx++}>Next Question</button>
-				{:else}
-					<button
-						disabled="true"
-						on:click={e =>
-							questionIdx < questions.length && questionIdx++}
-						>Next Question</button
-					>
-				{/if}
-			{/if}
-		</div>
+		{#key questionIdx}
+			<div class="question-wrapper">
+				<div
+					class="fade-wrapper"
+					bind:clientHeight={questionHeight}
+					in:fly={{ x: 300, duration: 850 }}
+					out:fly={{ x: -200, duration: 850 }}
+				>
+					<Question
+						questionHtml={questions[questionIdx].questionHtml}
+						answers={questions[questionIdx].answers}
+						correctAnswer={questions[questionIdx].correctAnswer}
+						questionNum={questionIdx + 1}
+						question={questions[questionIdx]}
+						on:addToCorrect={() => {
+							numCorrect++;
+						}}
+						on:removeFromCorrect={() => {
+							numCorrect--;
+						}}
+						on:addToWrong={() => {
+							numWrong++;
+						}}
+						on:removeFromWrong={() => {
+							numWrong--;
+						}}
+						on:removeFromUnanswered={() => {
+							numUnanswered--;
+						}}
+					/>
+					<div class="change-questions">
+						{#if questionIdx !== 0}
+							<button on:click={e => questionIdx--}
+								>Previous Question</button
+							>
+						{/if}
+						{#if questionIdx < questions.length - 1}
+							{#if questions[questionIdx]?.pickedAns !== undefined}
+								<button on:click={e => questionIdx++}
+									>Next Question</button
+								>
+							{:else}
+								<button
+									disabled="true"
+									on:click={e =>
+										questionIdx < questions.length &&
+										questionIdx++}>Next Question</button
+								>
+							{/if}
+						{/if}
+					</div>
+				</div>
+			</div>
+		{/key}
 	{:catch error}
 		<div>Error: {error}</div>
 	{/await}
@@ -109,10 +125,17 @@
 	}
 	.question-wrapper {
 		margin: 3em 0;
+		position: relative;
+		/* min-height: 100px; */
+	}
+	.fade-wrapper {
+		position: absolute;
+		width: 100%;
 	}
 	.change-questions {
 		display: flex;
 		justify-content: flex-end;
+		/* position: relative; */
 	}
 	.change-questions > button:last-child {
 		margin-left: 1rem;
