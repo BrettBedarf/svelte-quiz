@@ -11,7 +11,7 @@
 	</div>
 </div>
 
-<style>
+<style lang="scss">
 	.modal-bg {
 		position: fixed;
 		top: 0;
@@ -19,8 +19,8 @@
 		bottom: 0;
 		right: 0;
 		background: rgba(0, 0, 0, 0.5);
-	}
-	.modal {
-		background-color: white;
+		.modal {
+			background-color: white;
+		}
 	}
 </style>
