@@ -1,19 +1,50 @@
 <script>
+	import { onMount, beforeUpdate, afterUpdate, onDestroy } from 'svelte';
+
 	import { fade, blur, fly, slide } from 'svelte/transition';
 	import Question from './Question.svelte';
+	import Modal from './Modal.svelte';
+
+	export let restart;
+
+	/* Constants */
+	const numQuestions = 4;
 
 	let numCorrect = 0;
 	let numWrong = 0;
 	let numUnanswered = 0;
 
-	// const quizProm = getQuiz();
 	let questionsProm = getQuiz();
 	let questionIdx = 0;
 	let questionHeight;
 
+	/* Modal stuff */
+	// $: isComplete = numCorrect + numWrong === numQuestions;
+	let isModalOpen = false;
+
+	// reactive statement
+	$: if (numCorrect > 0) {
+		isModalOpen = true;
+	}
+
+	onMount(() => {
+		console.log('onMount');
+	});
+	beforeUpdate(() => {
+		console.log('before update');
+	});
+
+	afterUpdate(() => {
+		console.log('after update');
+	});
+	onDestroy(() => {
+		console.log('onDestroy');
+	});
+
 	async function getQuiz() {
+		console.log(`getting quiz`);
 		const response = await fetch(
-			'https://opentdb.com/api.php?amount=10&type=multiple'
+			`https://opentdb.com/api.php?amount=${numQuestions}&type=multiple`
 		);
 
 		const data = await response.json();
@@ -51,6 +82,12 @@
 	}
 </script>
 
+{#if isModalOpen}
+	<Modal on:close={() => (isModalOpen = false)}>
+		<h2>You won!</h2>
+		<button on:click={restart}>Start Over</button>
+	</Modal>
+{/if}
 <div id="quiz-container">
 	{#await questionsProm}
 		<div>Loading Quiz...</div>
@@ -61,55 +98,48 @@
 		</h2>
 		{#key questionIdx}
 			<div class="question-wrapper">
-				<div
-					class="fade-wrapper"
-					bind:clientHeight={questionHeight}
-					in:fly={{ x: 300, duration: 850 }}
-					out:fly={{ x: -200, duration: 850 }}
-				>
-					<Question
-						questionHtml={questions[questionIdx].questionHtml}
-						answers={questions[questionIdx].answers}
-						correctAnswer={questions[questionIdx].correctAnswer}
-						questionNum={questionIdx + 1}
-						question={questions[questionIdx]}
-						on:addToCorrect={() => {
-							numCorrect++;
-						}}
-						on:removeFromCorrect={() => {
-							numCorrect--;
-						}}
-						on:addToWrong={() => {
-							numWrong++;
-						}}
-						on:removeFromWrong={() => {
-							numWrong--;
-						}}
-						on:removeFromUnanswered={() => {
-							numUnanswered--;
-						}}
-					/>
-					<div class="change-questions">
-						{#if questionIdx !== 0}
-							<button on:click={e => questionIdx--}
-								>Previous Question</button
+				<Question
+					questionHtml={questions[questionIdx].questionHtml}
+					answers={questions[questionIdx].answers}
+					correctAnswer={questions[questionIdx].correctAnswer}
+					questionNum={questionIdx + 1}
+					question={questions[questionIdx]}
+					on:addToCorrect={() => {
+						numCorrect++;
+					}}
+					on:removeFromCorrect={() => {
+						numCorrect--;
+					}}
+					on:addToWrong={() => {
+						numWrong++;
+					}}
+					on:removeFromWrong={() => {
+						numWrong--;
+					}}
+					on:removeFromUnanswered={() => {
+						numUnanswered--;
+					}}
+				/>
+				<div class="change-questions">
+					{#if questionIdx !== 0}
+						<button on:click={e => questionIdx--}
+							>Previous Question</button
+						>
+					{/if}
+					{#if questionIdx < questions.length - 1}
+						{#if questions[questionIdx]?.pickedAns !== undefined}
+							<button on:click={e => questionIdx++}
+								>Next Question</button
+							>
+						{:else}
+							<button
+								disabled="true"
+								on:click={e =>
+									questionIdx < questions.length &&
+									questionIdx++}>Next Question</button
 							>
 						{/if}
-						{#if questionIdx < questions.length - 1}
-							{#if questions[questionIdx]?.pickedAns !== undefined}
-								<button on:click={e => questionIdx++}
-									>Next Question</button
-								>
-							{:else}
-								<button
-									disabled="true"
-									on:click={e =>
-										questionIdx < questions.length &&
-										questionIdx++}>Next Question</button
-								>
-							{/if}
-						{/if}
-					</div>
+					{/if}
 				</div>
 			</div>
 		{/key}
@@ -125,13 +155,10 @@
 	}
 	.question-wrapper {
 		margin: 3em 0;
-		position: relative;
+		/* position: relative; */
 		/* min-height: 100px; */
 	}
-	.fade-wrapper {
-		position: absolute;
-		width: 100%;
-	}
+
 	.change-questions {
 		display: flex;
 		justify-content: flex-end;

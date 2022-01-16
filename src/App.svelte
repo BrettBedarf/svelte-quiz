@@ -11,7 +11,7 @@
 	<!-- <h1>Hello {name}!</h1> -->
 	<button id="restart" on:click={restart}>Restart</button>
 	{#key unique}
-		<Quiz />
+		<Quiz {restart} />
 	{/key}
 </main>
 
