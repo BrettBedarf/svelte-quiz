@@ -1,6 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-
+	import { score } from '../store';
 	const dispatch = createEventDispatcher();
 
 	export let questionHtml;
@@ -15,13 +15,13 @@
 		if (answer === correctAnswer) {
 			// if first time answering, add to correct results
 			if (question.isCorrect === undefined) {
-				dispatch('addToCorrect');
+				score.update(score => score + 1);
 				dispatch('removeFromUnanswered');
 			}
 			// if prior answer was wrong, remove from wrong answers and add to correct
 			if (question.isCorrect === false) {
 				dispatch('removeFromWrong');
-				dispatch('addToCorrect');
+				score.update(score => score + 1);
 			}
 		} else {
 			// if first time answering, add to wrong
@@ -31,7 +31,8 @@
 			} else if (question.isCorrect === true) {
 				// if prior answer was correct, remove from correct answers and add to
 				// wrong
-				dispatch('removeFromCorrect');
+				score.update(score => score - 1);
+
 				dispatch('addToWrong');
 			}
 			// if prior answer was wrong, do nothing

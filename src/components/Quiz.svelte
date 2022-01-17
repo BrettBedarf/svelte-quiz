@@ -4,13 +4,17 @@
 	import { fade, blur, fly, slide } from 'svelte/transition';
 	import Question from './Question.svelte';
 	import Modal from './Modal.svelte';
+	import { score } from '../store.js';
 
 	export let restart;
 
 	/* Constants */
-	const numQuestions = 4;
+	const numQuestions = 10;
+	const correctToWin = 1;
 
-	let numCorrect = 0;
+	// let score = 0;
+	// score.subscribe(val => (score = val));
+
 	let numWrong = 0;
 	let numUnanswered = 0;
 
@@ -23,7 +27,7 @@
 	let isModalOpen = false;
 
 	// reactive statement
-	$: if (numCorrect > 0) {
+	$: if ($score >= correctToWin) {
 		isModalOpen = true;
 	}
 
@@ -67,7 +71,7 @@
 	// instead of using unique to reset from parent, can also reassign the
 	// getQuiz promise, which will re-await
 	function resetQuiz() {
-		numCorrect = 0;
+		score.set(0);
 		numWrong = 0;
 		numUnanswered = 0;
 		questionIdx = 0;
@@ -94,7 +98,7 @@
 	{:then questions}
 		<!-- <div on:click={resetQuiz}>reset</div> -->
 		<h2 class="score">
-			Score: {numCorrect}/{questions.length}
+			Score: {$score}/{questions.length}
 		</h2>
 		{#key questionIdx}
 			<div class="question-wrapper">
@@ -104,12 +108,6 @@
 					correctAnswer={questions[questionIdx].correctAnswer}
 					questionNum={questionIdx + 1}
 					question={questions[questionIdx]}
-					on:addToCorrect={() => {
-						numCorrect++;
-					}}
-					on:removeFromCorrect={() => {
-						numCorrect--;
-					}}
 					on:addToWrong={() => {
 						numWrong++;
 					}}
